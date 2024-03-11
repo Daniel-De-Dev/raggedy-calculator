@@ -6,9 +6,11 @@ enum Expression {
 }
 
 enum Operator {
+    Exponent,
     Multiplication,
     Division,
-    Addition
+    Addition,
+    Subtraction
 }
 
 fn tokenize(input: String) -> Result<Vec<Expression>, &'static str> {
@@ -26,15 +28,8 @@ fn tokenize(input: String) -> Result<Vec<Expression>, &'static str> {
     };   
 
     for (i, c) in input.chars().enumerate() {
-        if c.is_numeric() || c == '.' || c == '-' {
+        if c.is_numeric() || c == '.' {
             if slice_start.is_none() {
-                slice_start = Some(i);
-            } else if c == '-' {
-                if let Some(start) = slice_start {
-                    let num = parse_to_f64(start, i)?;
-                    tokens.push(Expression::Value(num));
-                    tokens.push(Expression::Operation(Operator::Addition));
-                }
                 slice_start = Some(i);
             } 
             continue;
@@ -46,10 +41,12 @@ fn tokenize(input: String) -> Result<Vec<Expression>, &'static str> {
                 slice_start = None;
             }
         match c {
+                '^' => tokens.push(Expression::Operation(Operator::Exponent)),
                 '*' => tokens.push(Expression::Operation(Operator::Multiplication)),
                 '/' => tokens.push(Expression::Operation(Operator::Division)),
                 '+' => tokens.push(Expression::Operation(Operator::Addition)),
-                _ => return Result::Err("Invalid input provided"),
+                '-' => tokens.push(Expression::Operation(Operator::Subtraction)),
+                _ => return Result::Err("Invalid input"),
             }   
     }
 
@@ -78,9 +75,11 @@ fn main() {
                     Expression::Value(num) => println!("{}", num),
                     Expression::Operation(operator) => {
                         match operator {
+                            Operator::Exponent => println!("^"),
                             Operator::Multiplication => println!("*"),
                             Operator::Addition => println!("+"),
                             Operator::Division => println!("/"),
+                            Operator::Subtraction => println!("-"),
                         }
                     }
                 }
