@@ -1,6 +1,7 @@
 use std::io::{self, Write};
 
-enum Expression {
+enum Token {
+    //Expression(Vec<Token>),
     Operation(Operator),
     Value(f64)
 }
@@ -13,8 +14,8 @@ enum Operator {
     Subtraction
 }
 
-fn tokenize(input: String) -> Result<Vec<Expression>, &'static str> {
-    let mut tokens: Vec<Expression> = Vec::new();    
+fn tokenize(input: String) -> Result<Vec<Token>, &'static str> {
+    let mut tokens: Vec<Token> = Vec::new();    
     let mut slice_start = None; 
     
     let parse_to_f64 = |start: usize, end: usize| -> Result<f64, &str> {
@@ -37,28 +38,28 @@ fn tokenize(input: String) -> Result<Vec<Expression>, &'static str> {
 
         if let Some(start) = slice_start {
                 let num = parse_to_f64(start, i)?;
-                tokens.push(Expression::Value(num));
+                tokens.push(Token::Value(num));
                 slice_start = None;
             }
         match c {
-                '^' => tokens.push(Expression::Operation(Operator::Exponent)),
-                '*' => tokens.push(Expression::Operation(Operator::Multiplication)),
-                '/' => tokens.push(Expression::Operation(Operator::Division)),
-                '+' => tokens.push(Expression::Operation(Operator::Addition)),
-                '-' => tokens.push(Expression::Operation(Operator::Subtraction)),
+                '^' => tokens.push(Token::Operation(Operator::Exponent)),
+                '*' => tokens.push(Token::Operation(Operator::Multiplication)),
+                '/' => tokens.push(Token::Operation(Operator::Division)),
+                '+' => tokens.push(Token::Operation(Operator::Addition)),
+                '-' => tokens.push(Token::Operation(Operator::Subtraction)),
                 _ => return Result::Err("Invalid input"),
             }   
     }
 
     if let Some(start) = slice_start {
         let num = parse_to_f64(start, input.len())?;
-        tokens.push(Expression::Value(num));
+        tokens.push(Token::Value(num));
     }
 
     Ok(tokens)
 }
 
-fn evaluate_expression(mut tokens: Vec<Expression>) -> Result<f64, &'static str> {
+fn evaluate_expression(mut tokens: Vec<Token>) -> Result<f64, &'static str> {
     loop {
         
         let mut priority = 0;
@@ -67,7 +68,7 @@ fn evaluate_expression(mut tokens: Vec<Expression>) -> Result<f64, &'static str>
         {
             let mut i = 0;
             for token in &tokens {
-                if let Expression::Operation(op) = token {
+                if let Token::Operation(op) = token {
                     match op {
                         Operator::Exponent => {
                             if priority < 2 {
@@ -105,8 +106,8 @@ fn evaluate_expression(mut tokens: Vec<Expression>) -> Result<f64, &'static str>
 
         if tokens.len() == 1 {
             match tokens[0] {
-                Expression::Operation(_) => return Err("Invalid expression"),
-                Expression::Value(n) => return Ok(n),
+                Token::Operation(_) => return Err("Invalid expression"),
+                Token::Value(n) => return Ok(n),
             }    
         }
     
@@ -120,15 +121,15 @@ fn evaluate_expression(mut tokens: Vec<Expression>) -> Result<f64, &'static str>
         };
         
         match &tokens[op_i] {
-            Expression::Operation(op) => {
+            Token::Operation(op) => {
                 let left = match tokens[op_i - 1] {
-                    Expression::Operation(_) => return Err("The left token of the operation is another operation"),
-                    Expression::Value(n) => n,
+                    Token::Operation(_) => return Err("The left token of the operation is another operation"),
+                    Token::Value(n) => n,
                 };
                 
                 let right = match tokens[op_i+1] {
-                    Expression::Operation(_) => return Err("The right token of the operation is another operation"),
-                    Expression::Value(n) => n,
+                    Token::Operation(_) => return Err("The right token of the operation is another operation"),
+                    Token::Value(n) => n,
                 };
 
                 let result = match op {
@@ -139,9 +140,9 @@ fn evaluate_expression(mut tokens: Vec<Expression>) -> Result<f64, &'static str>
                     Operator::Subtraction => left-right,
                 };
 
-                tokens.splice(op_i-1..=op_i+1, vec![Expression::Value(result)]);
+                tokens.splice(op_i-1..=op_i+1, vec![Token::Value(result)]);
             },
-            Expression::Value(_) => return Err("Indexed operator is a number"),
+            Token::Value(_) => return Err("Indexed operator is a number"),
         };
 
     }
