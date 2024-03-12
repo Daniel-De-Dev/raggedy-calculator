@@ -2,8 +2,8 @@
   "name": "Rust Development",
   "image": "rust:latest",
   "features": {
-    "ghcr.io/devcontainers/features/rust:1": {}
-  },
-  "postCreateCommand": "rustup component add rust-analysis --toolchain stable-x86_64-unknown-linux-gnu",
-  "remoteUser": "root"
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.18"
+    }
+  }
 }
